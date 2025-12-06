@@ -32,7 +32,7 @@ export class TennisGame1 implements TennisGame {
   }
 
   getScore(): string {
-    const gameStatus = this.getGameStatusString(this.player1Score, this.player2Score);
+    const gameStatus = this.getGameStatus(this.player1Score, this.player2Score);
     switch (gameStatus) {
       case GameStatus.EVEN:
         return this.getEqualScoreString(this.player1Score);
@@ -44,7 +44,7 @@ export class TennisGame1 implements TennisGame {
         return this.getRegularScoreString(this.player1Score, this.player2Score);
     }
   }
-  private getGameStatusString(player1Score: number, player2Score: number): string {
+  private getGameStatus(player1Score: number, player2Score: number): GameStatus {
     const minusResult: number = player1Score - player2Score;
     if (minusResult === 0) {
       return GameStatus.EVEN;
@@ -60,7 +60,7 @@ export class TennisGame1 implements TennisGame {
   }
 
   private getRegularScoreString(player1Score: number, player2Score: number): string {
-    return this.getScoreString(player1Score) + '-' + this.getScoreString(player2Score);
+    return `${this.getScoreString(player1Score)}-${this.getScoreString(player2Score)}`;
   }
 
   private getScoreString(score: number): string {
@@ -68,10 +68,10 @@ export class TennisGame1 implements TennisGame {
   }
 
   private getEqualScoreString(score: number): string {
-    if (this.player1Score >= 3) {
+    if (score >= 3) {
       return 'Deuce';
     }
-    return this.getScoreString(this.player1Score) + '-All';
+    return this.getScoreString(score) + '-All';
   }
 
   private getAdvantageString(minusResult: number): string {
