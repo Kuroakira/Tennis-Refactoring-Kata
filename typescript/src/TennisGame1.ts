@@ -26,23 +26,26 @@ export class TennisGame1 implements TennisGame {
 
   getScore(): string {
     if (this.player1Score === this.player2Score) {
-      if (this.player1Score >= 3) {
-        return 'Deuce';
-      }
-      return this.getScoreString(this.player1Score) + '-All';
+      return this.getEqualScoreString(this.player1Score);
     }
-
     else if (this.player1Score >= 4 || this.player2Score >= 4) {
-      const minusResult: number = this.player1Score - this.player2Score;
-      if (Math.abs(minusResult) === 1) {
-        return `Advantage ${minusResult > 0 ? this.player1Name : this.player2Name}`;
-      }
-      return `Win for ${minusResult > 0 ? this.player1Name : this.player2Name}`;
+      return this.getAdvantageOrWinString(this.player1Score - this.player2Score);
     }
     return this.getScoreString(this.player1Score) + '-' + this.getScoreString(this.player2Score);
   }
-
   private getScoreString(score: number): string {
     return this.scoreMap.get(score) || '';
+  }
+  private getEqualScoreString(score: number): string {
+    if (this.player1Score >= 3) {
+      return 'Deuce';
+    }
+    return this.getScoreString(this.player1Score) + '-All';
+  }
+  private getAdvantageOrWinString(minusResult: number): string {
+    if (Math.abs(minusResult) === 1) {
+      return `Advantage ${minusResult > 0 ? this.player1Name : this.player2Name}`;
+    }
+    return `Win for ${minusResult > 0 ? this.player1Name : this.player2Name}`;
   }
 }
