@@ -71,7 +71,7 @@ export class TennisGame1 implements TennisGame {
     if (score >= 3) {
       return 'Deuce';
     }
-    return this.getScoreString(score) + '-All';
+    return `${this.getScoreString(score)}-All`;
   }
 
   private getAdvantageString(minusResult: number): string {
