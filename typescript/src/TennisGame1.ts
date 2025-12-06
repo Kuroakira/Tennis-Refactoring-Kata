@@ -7,17 +7,79 @@ enum GameStatus {
   REGULAR = 'regular',
 }
 
-export class TennisGame1 implements TennisGame {
-  private player1Score: number = 0;
-  private player2Score: number = 0;
-  private player1Name: string;
-  private player2Name: string;
-  private scoreMap: Map<number, string> = new Map([
+abstract class GameStatusBase {
+  player1Score: number = 0;
+  player2Score: number = 0;
+  player1Name: string;
+  player2Name: string;
+  protected static readonly scoreMap: Map<number, string> = new Map([
     [0, 'Love'],
     [1, 'Fifteen'],
     [2, 'Thirty'],
     [3, 'Forty'],
   ]);
+
+  constructor(player1Score: number, player2Score: number, player1Name: string, player2Name: string) {
+    this.player1Score = player1Score;
+    this.player2Score = player2Score;
+    this.player1Name = player1Name;
+    this.player2Name = player2Name;
+  }
+
+  abstract getScore(): string;
+
+  protected getScoreString(score: number): string {
+    return GameStatusBase.scoreMap.get(score) || '';
+  }
+}
+
+class Even extends GameStatusBase {
+  getScore(): string {
+    if (this.player1Score >= 3) {
+      return 'Deuce';
+    }
+    return `${this.getScoreString(this.player1Score)}-All`;
+  }
+}
+
+class Advantage extends GameStatusBase {
+  getScore(): string {
+    return `Advantage ${this.player1Score > this.player2Score ? this.player1Name : this.player2Name}`;
+  }
+}
+
+class Win extends GameStatusBase {
+  getScore(): string {
+    return `Win for ${this.player1Score > this.player2Score ? this.player1Name : this.player2Name}`;
+  }
+}
+
+class Regular extends GameStatusBase {
+  getScore(): string {
+    return `${this.getScoreString(this.player1Score)}-${this.getScoreString(this.player2Score)}`;
+  }
+}
+
+class GameStatusFactory {
+  static createGameStatus(player1Score: number, player2Score: number, player1Name: string, player2Name: string): GameStatusBase {
+    const minusResult: number = player1Score - player2Score;
+    if (minusResult === 0) {
+      return new Even(player1Score, player2Score, player1Name, player2Name);
+    }
+    if (player1Score >= 4 || player2Score >= 4) {
+      return Math.abs(minusResult) >= 2
+        ? new Win(player1Score, player2Score, player1Name, player2Name)
+        : new Advantage(player1Score, player2Score, player1Name, player2Name);
+    }
+    return new Regular(player1Score, player2Score, player1Name, player2Name);
+  }
+}
+
+export class TennisGame1 implements TennisGame {
+  private player1Score: number = 0;
+  private player2Score: number = 0;
+  private player1Name: string;
+  private player2Name: string;
 
   constructor(player1Name: string, player2Name: string) {
     this.player1Name = player1Name;
@@ -35,53 +97,7 @@ export class TennisGame1 implements TennisGame {
   }
 
   getScore(): string {
-    const gameStatus = this.getGameStatus(this.player1Score, this.player2Score);
-    switch (gameStatus) {
-      case GameStatus.EVEN:
-        return this.getEqualScoreString(this.player1Score);
-      case GameStatus.ADVANTAGE:
-        return this.getAdvantageString(this.player1Score - this.player2Score);
-      case GameStatus.WIN:
-        return this.getWinString(this.player1Score - this.player2Score);
-      default:
-        return this.getRegularScoreString(this.player1Score, this.player2Score);
-    }
-  }
-  private getGameStatus(player1Score: number, player2Score: number): GameStatus {
-    const minusResult: number = player1Score - player2Score;
-    if (minusResult === 0) {
-      return GameStatus.EVEN;
-    }
-    if (this.isScoreOver4(player1Score, player2Score)) {
-      return Math.abs(minusResult) >= 2 ? GameStatus.WIN : GameStatus.ADVANTAGE;
-    }
-    return GameStatus.REGULAR;
-  }
-
-  private isScoreOver4(player1Score: number, player2Score: number): boolean {
-    return player1Score >= 4 || player2Score >= 4;
-  }
-
-  private getRegularScoreString(player1Score: number, player2Score: number): string {
-    return `${this.getScoreString(player1Score)}-${this.getScoreString(player2Score)}`;
-  }
-
-  private getScoreString(score: number): string {
-    return this.scoreMap.get(score) || '';
-  }
-
-  private getEqualScoreString(score: number): string {
-    if (score >= 3) {
-      return 'Deuce';
-    }
-    return `${this.getScoreString(score)}-All`;
-  }
-
-  private getAdvantageString(minusResult: number): string {
-    return `Advantage ${minusResult > 0 ? this.player1Name : this.player2Name}`;
-  }
-
-  private getWinString(minusResult: number): string {
-    return `Win for ${minusResult > 0 ? this.player1Name : this.player2Name}`;
+    const gameStatus = GameStatusFactory.createGameStatus(this.player1Score, this.player2Score, this.player1Name, this.player2Name);
+    return gameStatus.getScore();
   }
 }
