@@ -19,21 +19,19 @@ export class TennisGame1 implements TennisGame {
   }
 
   getScore(): string {
-    let score: string = '';
     if (this.player1Score === this.player2Score) {
       if (this.player1Score >= 3) {
         return 'Deuce';
       }
       return this.getScoreString(this.player1Score) + '-All';
     }
+
     else if (this.player1Score >= 4 || this.player2Score >= 4) {
       const minusResult: number = this.player1Score - this.player2Score;
-      if (minusResult === 1) score = `Advantage ${this.player1Name}`;
-      else if (minusResult === -1) score = `Advantage ${this.player2Name}`;
-      else if (minusResult >= 2) score = `Win for ${this.player1Name}`;
-      else score = `Win for ${this.player2Name}`;
-
-      return score;
+      if (Math.abs(minusResult) === 1) {
+        return `Advantage ${minusResult > 0 ? this.player1Name : this.player2Name}`;
+      }
+      return `Win for ${minusResult > 0 ? this.player1Name : this.player2Name}`;
     }
     return this.getScoreString(this.player1Score) + '-' + this.getScoreString(this.player2Score);
   }
