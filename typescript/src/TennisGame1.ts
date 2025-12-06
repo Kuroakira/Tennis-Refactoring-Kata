@@ -32,11 +32,10 @@ export class TennisGame1 implements TennisGame {
       else if (minusResult === -1) score = `Advantage ${this.player2Name}`;
       else if (minusResult >= 2) score = `Win for ${this.player1Name}`;
       else score = `Win for ${this.player2Name}`;
+
+      return score;
     }
-    else {
-      score = this.getScoreString(this.player1Score) + '-' + this.getScoreString(this.player2Score);
-    }
-    return score;
+    return this.getScoreString(this.player1Score) + '-' + this.getScoreString(this.player2Score);
   }
 
   private getScoreString(score: number): string {
