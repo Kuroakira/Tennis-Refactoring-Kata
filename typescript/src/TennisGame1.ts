@@ -25,6 +25,9 @@ export class TennisGame1 implements TennisGame {
   }
 
   wonPoint(playerName: string): void {
+    if (playerName !== this.player1Name && playerName !== this.player2Name) {
+      throw new Error('Invalid player name');
+    }
     if (playerName === this.player1Name)
       this.player1Score += 1;
     else
