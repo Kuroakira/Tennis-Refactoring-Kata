@@ -1,5 +1,12 @@
 import { TennisGame } from './TennisGame';
 
+enum GameStatus {
+  EVEN = 'even',
+  ADVANTAGE = 'advantage',
+  WIN = 'win',
+  REGULAR = 'regular',
+}
+
 export class TennisGame1 implements TennisGame {
   private player1Score: number = 0;
   private player2Score: number = 0;
@@ -27,11 +34,11 @@ export class TennisGame1 implements TennisGame {
   getScore(): string {
     const gameStatus = this.getGameStatusString(this.player1Score, this.player2Score);
     switch (gameStatus) {
-      case 'even':
+      case GameStatus.EVEN:
         return this.getEqualScoreString(this.player1Score);
-      case 'advantage':
+      case GameStatus.ADVANTAGE:
         return this.getAdvantageString(this.player1Score - this.player2Score);
-      case 'win':
+      case GameStatus.WIN:
         return this.getWinString(this.player1Score - this.player2Score);
       default:
         return this.getRegularScoreString(this.player1Score, this.player2Score);
@@ -40,34 +47,37 @@ export class TennisGame1 implements TennisGame {
   private getGameStatusString(player1Score: number, player2Score: number): string {
     const minusResult: number = player1Score - player2Score;
     if (minusResult === 0) {
-      return 'even';
+      return GameStatus.EVEN;
     }
     if (this.isScoreOver4(player1Score, player2Score)) {
-      if (Math.abs(minusResult) === 1) {
-        return 'advantage';
-      }
-      return 'win';
+      return Math.abs(minusResult) >= 2 ? GameStatus.WIN : GameStatus.ADVANTAGE;
     }
-    return 'regular';
+    return GameStatus.REGULAR;
   }
+
   private isScoreOver4(player1Score: number, player2Score: number): boolean {
     return player1Score >= 4 || player2Score >= 4;
   }
+
   private getRegularScoreString(player1Score: number, player2Score: number): string {
     return this.getScoreString(player1Score) + '-' + this.getScoreString(player2Score);
   }
+
   private getScoreString(score: number): string {
     return this.scoreMap.get(score) || '';
   }
+
   private getEqualScoreString(score: number): string {
     if (this.player1Score >= 3) {
       return 'Deuce';
     }
     return this.getScoreString(this.player1Score) + '-All';
   }
+
   private getAdvantageString(minusResult: number): string {
     return `Advantage ${minusResult > 0 ? this.player1Name : this.player2Name}`;
   }
+
   private getWinString(minusResult: number): string {
     return `Win for ${minusResult > 0 ? this.player1Name : this.player2Name}`;
   }
