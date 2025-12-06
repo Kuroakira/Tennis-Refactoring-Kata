@@ -5,6 +5,12 @@ export class TennisGame1 implements TennisGame {
   private player2Score: number = 0;
   private player1Name: string;
   private player2Name: string;
+  private scoreMap: Map<number, string> = new Map([
+    [0, 'Love'],
+    [1, 'Fifteen'],
+    [2, 'Thirty'],
+    [3, 'Forty'],
+  ]);
 
   constructor(player1Name: string, player2Name: string) {
     this.player1Name = player1Name;
@@ -37,16 +43,6 @@ export class TennisGame1 implements TennisGame {
   }
 
   private getScoreString(score: number): string {
-    switch (score) {
-      case 0:
-        return 'Love';
-      case 1:
-        return 'Fifteen';
-      case 2:
-        return 'Thirty';
-      case 3:
-        return 'Forty';
-    }
-    return '';
+    return this.scoreMap.get(score) || '';
   }
 }
