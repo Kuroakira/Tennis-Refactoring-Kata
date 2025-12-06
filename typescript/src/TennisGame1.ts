@@ -25,13 +25,36 @@ export class TennisGame1 implements TennisGame {
   }
 
   getScore(): string {
-    if (this.player1Score === this.player2Score) {
-      return this.getEqualScoreString(this.player1Score);
+    const gameStatus = this.getGameStatusString(this.player1Score, this.player2Score);
+    switch (gameStatus) {
+      case 'even':
+        return this.getEqualScoreString(this.player1Score);
+      case 'advantage':
+        return this.getAdvantageString(this.player1Score - this.player2Score);
+      case 'win':
+        return this.getWinString(this.player1Score - this.player2Score);
+      default:
+        return this.getRegularScoreString(this.player1Score, this.player2Score);
     }
-    else if (this.player1Score >= 4 || this.player2Score >= 4) {
-      return this.getAdvantageOrWinString(this.player1Score - this.player2Score);
+  }
+  private getGameStatusString(player1Score: number, player2Score: number): string {
+    const minusResult: number = player1Score - player2Score;
+    if (minusResult === 0) {
+      return 'even';
     }
-    return this.getScoreString(this.player1Score) + '-' + this.getScoreString(this.player2Score);
+    if (this.isScoreOver4(player1Score, player2Score)) {
+      if (Math.abs(minusResult) === 1) {
+        return 'advantage';
+      }
+      return 'win';
+    }
+    return 'regular';
+  }
+  private isScoreOver4(player1Score: number, player2Score: number): boolean {
+    return player1Score >= 4 || player2Score >= 4;
+  }
+  private getRegularScoreString(player1Score: number, player2Score: number): string {
+    return this.getScoreString(player1Score) + '-' + this.getScoreString(player2Score);
   }
   private getScoreString(score: number): string {
     return this.scoreMap.get(score) || '';
@@ -42,10 +65,10 @@ export class TennisGame1 implements TennisGame {
     }
     return this.getScoreString(this.player1Score) + '-All';
   }
-  private getAdvantageOrWinString(minusResult: number): string {
-    if (Math.abs(minusResult) === 1) {
-      return `Advantage ${minusResult > 0 ? this.player1Name : this.player2Name}`;
-    }
+  private getAdvantageString(minusResult: number): string {
+    return `Advantage ${minusResult > 0 ? this.player1Name : this.player2Name}`;
+  }
+  private getWinString(minusResult: number): string {
     return `Win for ${minusResult > 0 ? this.player1Name : this.player2Name}`;
   }
 }
