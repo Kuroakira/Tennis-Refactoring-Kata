@@ -2,165 +2,127 @@ import { TennisGame } from './TennisGame';
 
 export class TennisGame4  implements TennisGame {
 
-    public server : string;
-    public receiver : string;
-    public serverScore: number;
-    public receiverScore: number;
+    public player1 : Player;
+    public player2 : Player;
 
     constructor(player1: string, player2: string) {
-        this.server = player1;
-        this.receiver = player2;
-        this.serverScore = 0;
-        this.receiverScore = 0;
+        this.player1 = new Player(player1, true);
+        this.player2 = new Player(player2, false);
+    }
+
+    wonPoint(name: string) {
+        const scorer = this.getScorerByName(name);
+        scorer.winPoint();
+    }
+
+    getScorerByName(name: string): Player {
+        if (name === this.player1.name) {
+            return this.player1;
+        }
+        return this.player2;
     }
 
     getScore() {
-        let result = new Deuce(
-            this, new GameServer(
-                this, new GameReceiver(
-                    this, new AdvantageServer(
-                        this, new AdvantageReceiver(
-                            this, new DefaultResult(this)))))).getResult();
-        return result.format();
-    }
+        const server = this.player1.isServing ? this.player1 : this.player2;
+        const receiver = this.player1.isServing ? this.player2 : this.player1;
 
-    receiverHasAdvantage() {
-        return this.receiverScore >= 4 && (this.receiverScore - this.serverScore) === 1;
-    }
+        const scoreHandler = new WinHandler();
+        scoreHandler.setNextHandler(new AdvantageHandler())
+                    .setNextHandler(new DeuceHandler())
+                    .setNextHandler(new NormalScoreHandler());
 
-    serverHasAdvantage() {
-        return this.serverScore >= 4 && (this.serverScore - this.receiverScore) === 1;
-    }
-
-    receiverHasWon() {
-        return this.receiverScore >= 4 && (this.receiverScore - this.serverScore) >= 2;
-    }
-
-    serverHasWon() {
-        return this.serverScore >= 4 && (this.serverScore - this.receiverScore) >= 2;
-    }
-
-    isDeuce() {
-        return this.serverScore >= 3 && this.receiverScore >= 3 && (this.serverScore === this.receiverScore);
-    }
-
-    wonPoint(playerName: string): void {
-        if (playerName === 'player1')
-            this.serverScore += 1;
-        else
-            this.receiverScore += 1;
+        const result = scoreHandler.handle(server, receiver);
+        if (result) {
+            return result;
+        }
+        throw new Error("No handler found");
     }
 }
 
-class TennisResult {
-    private serverScore: string;
-    private receiverScore: string;
-    constructor(serverScore: string, receiverScore: string) {
-        this.serverScore = serverScore;
-        this.receiverScore = receiverScore;
+class Player {
+    readonly name: string;
+    private score: number;
+    isServing: boolean;
+    constructor(name: string, isServing: boolean) {
+        this.name = name;
+        this.score = 0;
+        this.isServing = isServing;
     }
-
-    format() {
-        if ("" === this.receiverScore) {
-            return this.serverScore;
-        }
-        if (this.serverScore === this.receiverScore) {
-            return this.serverScore + "-All";
-        }
-        return this.serverScore + "-" + this.receiverScore;
+    getScore(): number {
+        return this.score;
+    }
+    winPoint() {
+        this.score += 1;
     }
 }
 
-class Deuce {
-    private game: TennisGame4;
-    private nextResult: GameServer;
-    constructor(game: TennisGame4, nextResult: GameServer) {
-        this.game = game;
-        this.nextResult = nextResult;
+abstract class ScoreHandler {
+    nextHandler: ScoreHandler | null = null;
+
+    setNextHandler(handler: ScoreHandler) {
+        this.nextHandler = handler;
+        return handler;
     }
 
-    getResult() {
-        if (this.game.isDeuce()) {
-            return new TennisResult("Deuce", "");
+    handle(server: Player, receiver: Player): string | null {
+        const result = this.process(server, receiver);
+        if (result) {
+            return result
         }
-        return this.nextResult.getResult();
+
+        if (this.nextHandler) {
+            return this.nextHandler.handle(server, receiver);
+        }
+
+        throw new Error("No handler found");
+    }
+
+    protected abstract process(server: Player, receiver: Player): string | null;
+}
+
+class DeuceHandler extends ScoreHandler {
+    protected process(server: Player, receiver: Player): string | null {
+        if (server.getScore() === receiver.getScore() && server.getScore() >= 3) {
+            return "Deuce";
+        }
+        return null;
     }
 }
 
-class GameServer {
-    private game: TennisGame4;
-    private nextResult: GameReceiver;
-    constructor(game: TennisGame4, nextResult: GameReceiver) {
-        this.game = game;
-        this.nextResult = nextResult;
-    }
+class AdvantageHandler extends ScoreHandler {
+    protected process(server: Player, receiver: Player): string | null {
 
-    getResult() {
-        if (this.game.serverHasWon()) {
-            return new TennisResult("Win for " + this.game.server, "");
+        const diffScore = Math.abs(server.getScore() - receiver.getScore());
+        if (diffScore === 1 && (server.getScore() >= 4 || receiver.getScore() >= 4)) {
+            return "Advantage " + (server.getScore() > receiver.getScore() ? server.name : receiver.name);
         }
-        return this.nextResult.getResult();
+        return null;
     }
 }
 
-class GameReceiver {
-    private game: TennisGame4;
-    private nextResult: AdvantageServer;
-    constructor(game: TennisGame4, nextResult: AdvantageServer) {
-        this.game = game;
-        this.nextResult = nextResult;
-    }
-
-    getResult() {
-        if (this.game.receiverHasWon()) {
-            return new TennisResult("Win for " + this.game.receiver, "");
+class WinHandler extends ScoreHandler {
+    protected process(server: Player, receiver: Player): string | null {
+        const diffScore = Math.abs(server.getScore() - receiver.getScore());
+        if (diffScore >= 2 && (server.getScore() >= 4 || receiver.getScore() >= 4)) {
+            return "Win for " + (server.getScore() > receiver.getScore() ? server.name : receiver.name);
         }
-        return this.nextResult.getResult();
+        return null;
     }
 }
 
-class AdvantageServer {
-    private game: TennisGame4;
-    private nextResult: AdvantageReceiver;
-    constructor(game: TennisGame4, nextResult: AdvantageReceiver) {
-        this.game = game;
-        this.nextResult = nextResult;
-    }
+class NormalScoreHandler extends ScoreHandler {
+    private static readonly scores: string[] = ["Love", "Fifteen", "Thirty", "Forty"];
 
-    getResult() {
-        if (this.game.serverHasAdvantage()) {
-            return new TennisResult("Advantage " + this.game.server, "");
+    protected process(server: Player, receiver: Player): string | null {
+
+        if (server.getScore() === receiver.getScore()) {
+            return this.format(server.getScore()) + "-All";
         }
-        return this.nextResult.getResult();
-    }
-}
 
-class AdvantageReceiver {
-    private game: TennisGame4;
-    private nextResult: DefaultResult;
-    constructor(game: TennisGame4, nextResult: DefaultResult) {
-        this.game = game;
-        this.nextResult = nextResult;
+        return this.format(server.getScore()) + "-" + this.format(receiver.getScore());
     }
 
-
-    getResult() {
-        if (this.game.receiverHasAdvantage()) {
-            return new TennisResult("Advantage " + this.game.receiver, "");
-        }
-        return this.nextResult.getResult();
-    }
-}
-
-class DefaultResult {
-    private scores: string[];
-    private game: TennisGame4;
-    constructor(game: TennisGame4) {
-        this.scores = ["Love", "Fifteen", "Thirty", "Forty"];
-        this.game = game;
-    }
-
-    getResult() {
-        return new TennisResult(this.scores[this.game.serverScore], this.scores[this.game.receiverScore]);
+    private format(score: number): string {
+        return NormalScoreHandler.scores[score];
     }
 }
