@@ -86,7 +86,6 @@ class DeuceHandler extends ScoreHandler{
 
 class AdvantageHandler extends ScoreHandler {
   protected process(player1: Player, player2: Player): string | null {
-    console.log(player1.getScore(), player2.getScore());
     const diffScore = Math.abs(player1.getScore() - player2.getScore());
     if ((player1.getScore() >= 4 || player2.getScore() >= 4) && diffScore === 1) {
       return `Advantage ${player1.getScore() > player2.getScore() ? player1.name : player2.name}`;
