@@ -4,16 +4,10 @@ export class TennisGame4  implements TennisGame {
 
     public player1 : Player;
     public player2 : Player;
-    private scoreHandler: ScoreHandler;
 
     constructor(player1: string, player2: string) {
         this.player1 = new Player(player1, true);
         this.player2 = new Player(player2, false);
-
-        this.scoreHandler = new WinHandler();
-        this.scoreHandler.setNextHandler(new AdvantageHandler())
-                        .setNextHandler(new DeuceHandler())
-                        .setNextHandler(new NormalScoreHandler());
     }
 
     wonPoint(name: string) {
@@ -32,7 +26,12 @@ export class TennisGame4  implements TennisGame {
         const server = this.player1.isServing ? this.player1 : this.player2;
         const receiver = this.player1.isServing ? this.player2 : this.player1;
 
-        const result = this.scoreHandler.handle(server, receiver);
+        const scoreHandler = new WinHandler();
+        scoreHandler.setNextHandler(new AdvantageHandler());
+        scoreHandler.setNextHandler(new DeuceHandler());
+        scoreHandler.setNextHandler(new NormalScoreHandler());
+
+        const result = scoreHandler.handle(server, receiver);
         if (result) {
             return result;
         }
@@ -62,7 +61,6 @@ abstract class ScoreHandler {
 
     setNextHandler(handler: ScoreHandler) {
         this.nextHandler = handler;
-        return handler;
     }
 
     handle(server: Player, receiver: Player): string | null {
