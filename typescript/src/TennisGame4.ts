@@ -26,12 +26,15 @@ export class TennisGame4  implements TennisGame {
         const server = this.player1.isServing ? this.player1 : this.player2;
         const receiver = this.player1.isServing ? this.player2 : this.player1;
 
-        const scoreHandler = new WinHandler();
-        scoreHandler.setNextHandler(new AdvantageHandler());
-        scoreHandler.setNextHandler(new DeuceHandler());
-        scoreHandler.setNextHandler(new NormalScoreHandler());
+        const winHandler = new WinHandler();
+        const advantageHandler = new AdvantageHandler();
+        const deuceHandler = new DeuceHandler();
+        const normalScoreHandler = new NormalScoreHandler();
+        winHandler.setNextHandler(advantageHandler);
+        advantageHandler.setNextHandler(deuceHandler);
+        deuceHandler.setNextHandler(normalScoreHandler);
 
-        const result = scoreHandler.handle(server, receiver);
+        const result = winHandler.handle(server, receiver);
         if (result) {
             return result;
         }
@@ -113,12 +116,13 @@ class NormalScoreHandler extends ScoreHandler {
     private static readonly scores: string[] = ["Love", "Fifteen", "Thirty", "Forty"];
 
     protected process(server: Player, receiver: Player): string | null {
-
-        if (server.getScore() === receiver.getScore()) {
-            return this.format(server.getScore()) + "-All";
+        if (server.getScore() < 4 && receiver.getScore() < 4) {
+            if (server.getScore() === receiver.getScore()) {
+                return this.format(server.getScore()) + "-All";
+            }
+            return this.format(server.getScore()) + "-" + this.format(receiver.getScore());
         }
-
-        return this.format(server.getScore()) + "-" + this.format(receiver.getScore());
+        return null;
     }
 
     private format(score: number): string {
